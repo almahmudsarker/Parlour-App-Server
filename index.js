@@ -25,9 +25,23 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    const usersCollection = client.db("parlourDb").collection("users");
     const servicesCollection = client.db("parlourDb").collection("services");
     const bookedCollection = client.db("parlourDb").collection("booked");
     const reviewsCollection = client.db("parlourDb").collection("reviews");
+    // User related api
+    app.put("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const query = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: user,
+      };
+      const result = await usersCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
     // Get all Services api
     app.get("/services", async (req, res) => {
       const services = await servicesCollection.find().toArray();
