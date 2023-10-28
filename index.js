@@ -29,7 +29,7 @@ async function run() {
     const servicesCollection = client.db("parlourDb").collection("services");
     const bookedCollection = client.db("parlourDb").collection("booked");
     const reviewsCollection = client.db("parlourDb").collection("reviews");
-    // User related api
+    // post or get user by email api
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -39,6 +39,14 @@ async function run() {
         $set: user,
       };
       const result = await usersCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
+    // get user role by email api
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
       res.send(result);
     });
 
