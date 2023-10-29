@@ -113,13 +113,13 @@ async function run() {
 
     // .......................................................
     // Admin api
-    // Get all Orders api
+    // Get all service Orders api
     app.get("/orders", async (req, res) => {
       const result = await bookedCollection.find().toArray();
       res.send(result);
     });
 
-    // Update Order Status api
+    // Update service Order Status api
     app.put("/orders/:id", async (req, res) => {
       const { id } = req.params;
       const { status } = req.body;
@@ -131,12 +131,47 @@ async function run() {
       res.json(result);
     });
 
-    // Delete Service api
+    // Edit a Service (PUT)
+    app.put("/services/:id", async (req, res) => {
+      const { id } = req.params;
+      const updatedService = req.body;
+
+      try {
+        const query = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: updatedService, // Use $set to update fields other than _id
+        };
+
+        const result = await servicesCollection.updateOne(query, updateDoc);
+
+        if (result.matchedCount === 0) {
+          return res.status(404).json({ error: "Service not found" });
+        }
+
+        res.json(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    // Delete a Service (DELETE)
     app.delete("/services/:id", async (req, res) => {
       const { id } = req.params;
-      const query = { _id: new ObjectId(id) };
-      const result = await servicesCollection.deleteOne(query);
-      res.json(result);
+
+      try {
+        const query = { _id: new ObjectId(id) };
+        const result = await servicesCollection.deleteOne(query);
+
+        if (result.deletedCount === 0) {
+          return res.status(404).json({ error: "Service not found" });
+        }
+
+        res.json(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // .......
