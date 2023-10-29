@@ -111,11 +111,68 @@ async function run() {
       res.json(result);
     });
 
+    // .......................................................
     // Admin api
+    // Get all Orders api
     app.get("/orders", async (req, res) => {
       const result = await bookedCollection.find().toArray();
       res.send(result);
     });
+
+    // Update Order Status api
+    app.put("/orders/:id", async (req, res) => {
+      const { id } = req.params;
+      const { status } = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: { status: status },
+      };
+      const result = await bookedCollection.updateOne(query, updateDoc);
+      res.json(result);
+    });
+
+    // Delete Service api
+    app.delete("/services/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: new ObjectId(id) };
+      const result = await servicesCollection.deleteOne(query);
+      res.json(result);
+    });
+
+    // .......
+    // Make a user an admin
+    app.put("/users/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      try {
+        const query = { email: email };
+        const updateDoc = {
+          $set: { role: "admin" }, // Set the user role to "admin"
+        };
+        const result = await usersCollection.updateOne(query, updateDoc);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    // Remove admin role from a user
+    app.put("/users/remove-admin/:email", async (req, res) => {
+      const email = req.params.email;
+      try {
+        const query = { email: email };
+        const updateDoc = {
+          $set: { role: "user" }, // Set the user role back to "user"
+        };
+        const result = await usersCollection.updateOne(query, updateDoc);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    // .......................................................
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
