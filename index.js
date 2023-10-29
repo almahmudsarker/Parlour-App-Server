@@ -92,6 +92,13 @@ async function run() {
       res.send(result);
     });
 
+    // Add a new service api
+    app.post("/services", async (req, res) => {
+      const newService = req.body;
+      const result = await servicesCollection.insertOne(newService);
+      res.json(result);
+    });
+
     // Get all Reviews api
     app.get("/reviews", async (req, res) => {
       const reviews = await reviewsCollection.find().toArray();
@@ -102,6 +109,12 @@ async function run() {
       const newReview = req.body;
       const result = await reviewsCollection.insertOne(newReview);
       res.json(result);
+    });
+
+    // Admin api
+    app.get("/orders", async (req, res) => {
+      const result = await bookedCollection.find().toArray();
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
