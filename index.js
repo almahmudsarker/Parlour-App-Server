@@ -29,6 +29,8 @@ async function run() {
     const servicesCollection = client.db("parlourDb").collection("services");
     const bookedCollection = client.db("parlourDb").collection("booked");
     const reviewsCollection = client.db("parlourDb").collection("reviews");
+    const productsCollection = client.db("parlourDb").collection("products");
+    const cartCollection = client.db("parlourDb").collection("carts");
     // post or get user by email api
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -50,6 +52,8 @@ async function run() {
       res.send(result);
     });
 
+    // .......................................................
+    // Services api
     // Get all Services api
     app.get("/services", async (req, res) => {
       const services = await servicesCollection.find().toArray();
@@ -99,6 +103,8 @@ async function run() {
       res.json(result);
     });
 
+    // .......................................................
+    // Reviews api
     // Get all Reviews api
     app.get("/reviews", async (req, res) => {
       const reviews = await reviewsCollection.find().toArray();
@@ -109,6 +115,47 @@ async function run() {
       const newReview = req.body;
       const result = await reviewsCollection.insertOne(newReview);
       res.json(result);
+    });
+
+    // .......................................................
+    // Products api
+    // Get all Products api
+    app.get("/products", async (req, res) => {
+      const products = await productsCollection.find().toArray();
+      res.send(products);
+    });
+    // Get cart by user api
+    app.get("/carts", async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+        res.send([]);
+      }
+      const query = { email: email };
+      const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
+    // Add to cart api
+    app.post("/carts", async (req, res) => {
+      const product = req.body;
+      const result = await cartCollection.insertOne(product);
+      res.send(result);
+    });
+    // Remove from cart api
+    app.delete("/carts/:id", async (req, res) => {
+      const { id } = req.params;
+
+      try {
+        const query = { _id: new ObjectId(id) };
+        const result = await cartCollection.deleteOne(query);
+
+        if (result.deletedCount === 0) {
+          return res.status(404).json({ error: "Product not found" });
+        }
+        res.json(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     // .......................................................
