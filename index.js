@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const SSLCommerzPayment = require("sslcommerz");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
@@ -31,6 +32,10 @@ async function run() {
     const reviewsCollection = client.db("parlourDb").collection("reviews");
     const productsCollection = client.db("parlourDb").collection("products");
     const cartCollection = client.db("parlourDb").collection("carts");
+    const purchaseCollection = client
+      .db("parlourDb")
+      .collection("purchaseOrders");
+
     // post or get user by email api
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -157,6 +162,27 @@ async function run() {
         res.status(500).json({ error: "Internal server error" });
       }
     });
+    // purchase products by email api
+    app.post("/purchase", async (req, res) => {
+      try {
+        const purchaseData = req.body;
+
+        // Perform any necessary validation on purchaseData
+
+        // Save the purchase details to the database
+        const result = await purchaseCollection.insertOne(purchaseData);
+
+        // Clear the user's cart after successful purchase
+        const deleteCartResult = await cartCollection.deleteMany({
+          email: purchaseData.userEmail,
+        });
+
+        res.json({ success: true, purchaseResult: result, deleteCartResult });
+      } catch (error) {
+        console.error("Error processing purchase:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
 
     // .......................................................
     // Admin api
@@ -248,6 +274,31 @@ async function run() {
         };
         const result = await usersCollection.updateOne(query, updateDoc);
         res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    // Get all users api
+    app.get("/users", async (req, res) => {
+      const users = await usersCollection.find().toArray();
+      res.send(users);
+    });
+
+    // Delete from user list (USER)
+    app.delete("/users/:email", async (req, res) => {
+      const email = req.params.email;
+
+      try {
+        const query = { email: email };
+        const result = await usersCollection.deleteOne(query);
+
+        if (result.deletedCount === 0) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        res.json(result);
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal server error" });
